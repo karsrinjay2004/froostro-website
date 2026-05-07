@@ -5,7 +5,7 @@ export default function Home() {
     <main className="min-h-screen bg-white text-black">
       
       {/* HERO SECTION */}
-      <section className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-20">
+      <section className="bg-gradient-to-r from-darkgreen-500 to-green-500 text-white px-6 py-20">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-5xl font-bold">
             FROOSTRO
