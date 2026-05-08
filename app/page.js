@@ -121,7 +121,7 @@ export default function Home() {
         <section className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-20">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-5xl font-bold">
-              Affordable Home Made Meals Delivered To Your Doorstep
+              Affordable Home Made & Restaurants Meals Delivered To Your Doorstep
             </h1>
 
             <p className="mt-6 text-xl max-w-3xl mx-auto">
@@ -150,7 +150,7 @@ export default function Home() {
         <section className="py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-4xl font-bold text-center text-orange-600">
-              Fresh Meals Available
+              Fresh Meals On Your Table
             </h2>
 
             <p className="text-center text-gray-600 mt-4">
