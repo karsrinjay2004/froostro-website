@@ -6,8 +6,13 @@ import {
   collection,
   addDoc,
   doc,
-  getDoc
+  getDoc,
 } from "firebase/firestore";
+import {
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function SellerDashboard() {
   const [sellerName, setSellerName] = useState("");
@@ -21,28 +26,42 @@ export default function SellerDashboard() {
   const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchSellerData();
-  }, []);
+  const router = useRouter();
 
-  const fetchSellerData = async () => {
+  const handleLogout = async () => {
     try {
-      const user = auth.currentUser;
-
-      if (!user) return;
-
-      const sellerRef = doc(db, "sellers", user.uid);
-      const sellerSnap = await getDoc(sellerRef);
-
-      if (sellerSnap.exists()) {
-        const data = sellerSnap.data();
-        setSellerName(data.sellerName);
-        setSellerType(data.sellerType);
-      }
+      await signOut(auth);
+      router.push("/seller/auth");
     } catch (error) {
-      console.error(error);
+      alert(error.message);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push("/seller/auth");
+        return;
+      }
+
+      try {
+        const sellerRef = doc(db, "sellers", user.uid);
+        const sellerSnap = await getDoc(sellerRef);
+
+        if (sellerSnap.exists()) {
+          const data = sellerSnap.data();
+          setSellerName(data.sellerName);
+          setSellerType(data.sellerType);
+        } else {
+          router.push("/seller/auth");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleAddDish = async (e) => {
     e.preventDefault();
@@ -72,7 +91,6 @@ export default function SellerDashboard() {
       setMealCategory("");
       setSubscriptionType("");
       setQuantity("");
-
     } catch (error) {
       alert(error.message);
     } finally {
@@ -84,21 +102,33 @@ export default function SellerDashboard() {
     <main className="min-h-screen bg-orange-50 px-6 py-12">
       <div className="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl p-10">
 
-        <h1 className="text-3xl font-bold text-center text-orange-600">
-          Seller Dashboard
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-orange-600">
+            Seller Dashboard
+          </h1>
+
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold"
+          >
+            Logout
+          </button>
+        </div>
 
         <p className="text-center text-gray-600 mt-2">
           Add your dishes to Froostro
         </p>
 
         <div className="mt-6 bg-orange-100 p-4 rounded-xl">
-          <p><strong>Seller:</strong> {sellerName || "Loading..."}</p>
-          <p><strong>Type:</strong>  {sellerType || "Loading..."}</p>
+          <p>
+            <strong>Seller:</strong> {sellerName || "Loading..."}
+          </p>
+          <p>
+            <strong>Type:</strong> {sellerType || "Loading..."}
+          </p>
         </div>
 
         <form onSubmit={handleAddDish} className="mt-8 space-y-5">
-
           <input
             type="text"
             placeholder="Dish Name"
@@ -177,8 +207,8 @@ export default function SellerDashboard() {
           >
             {loading ? "Adding Dish..." : "Add Dish"}
           </button>
-
         </form>
+
       </div>
     </main>
   );

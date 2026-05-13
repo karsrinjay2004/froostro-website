@@ -137,7 +137,7 @@ export default function Home() {
               </a>
 
               <a
-                href="/seller/signup"
+                href="/seller/auth"
                 className="border border-white px-6 py-3 rounded-xl font-semibold"
               >
                 Become a Seller
