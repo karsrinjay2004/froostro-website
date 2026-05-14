@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { db, auth } from "../../../lib/firebase";
+import { auth, db } from "../../../lib/firebase";
 import {
   collection,
   addDoc,
@@ -15,30 +15,22 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function SellerDashboard() {
+  const router = useRouter();
+
   const [sellerName, setSellerName] = useState("");
   const [sellerType, setSellerType] = useState("");
-  const [sellerLatitude, setSellerLatitude] = useState(null);
-  const [sellerLongitude, setSellerLongitude] = useState(null);
 
   const [dishName, setDishName] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [mealCategory, setMealCategory] = useState("");
   const [subscriptionType, setSubscriptionType] = useState("");
   const [quantity, setQuantity] = useState("");
+
+  const [imageFile, setImageFile] = useState(null);
+
   const [loading, setLoading] = useState(false);
-
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push("/seller/auth");
-    } catch (error) {
-      alert(error.message);
-    }
-  };
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -53,13 +45,8 @@ export default function SellerDashboard() {
 
         if (sellerSnap.exists()) {
           const data = sellerSnap.data();
-
           setSellerName(data.sellerName);
           setSellerType(data.sellerType);
-          setSellerLatitude(data.latitude);
-          setSellerLongitude(data.longitude);
-        } else {
-          router.push("/seller/auth");
         }
       } catch (error) {
         console.error(error);
@@ -69,11 +56,52 @@ export default function SellerDashboard() {
     return () => unsubscribe();
   }, [router]);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push("/seller/auth");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const uploadToCloudinary = async () => {
+    if (!imageFile) {
+      throw new Error("Please select an image.");
+    }
+
+    setUploadingImage(true);
+
+    const formData = new FormData();
+    formData.append("file", imageFile);
+    formData.append("upload_preset", "froostro_dishes");
+
+    const response = await fetch(
+      "https://api.cloudinary.com/v1_1/djcpol3kh/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+
+    setUploadingImage(false);
+
+    if (!data.secure_url) {
+      throw new Error("Image upload failed.");
+    }
+
+    return data.secure_url;
+  };
+
   const handleAddDish = async (e) => {
     e.preventDefault();
 
     try {
       setLoading(true);
+
+      const imageUrl = await uploadToCloudinary();
 
       await addDoc(collection(db, "dishes"), {
         sellerName,
@@ -85,8 +113,6 @@ export default function SellerDashboard() {
         mealCategory,
         subscriptionType,
         quantity,
-        latitude: sellerLatitude,
-        longitude: sellerLongitude,
         createdAt: new Date(),
       });
 
@@ -94,22 +120,24 @@ export default function SellerDashboard() {
 
       setDishName("");
       setPrice("");
-      setImageUrl("");
       setDescription("");
       setMealCategory("");
       setSubscriptionType("");
       setQuantity("");
+      setImageFile(null);
+
     } catch (error) {
       alert(error.message);
     } finally {
       setLoading(false);
+      setUploadingImage(false);
     }
   };
 
   return (
     <main className="min-h-screen bg-orange-50 px-6 py-12">
       <div className="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl p-10">
-
+        
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-orange-600">
             Seller Dashboard
@@ -117,13 +145,13 @@ export default function SellerDashboard() {
 
           <button
             onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold"
+            className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold"
           >
             Logout
           </button>
         </div>
 
-        <p className="text-center text-gray-600 mt-2">
+        <p className="text-center text-gray-600 mt-4">
           Add your dishes to Froostro
         </p>
 
@@ -137,6 +165,7 @@ export default function SellerDashboard() {
         </div>
 
         <form onSubmit={handleAddDish} className="mt-8 space-y-5">
+          
           <input
             type="text"
             placeholder="Dish Name"
@@ -164,14 +193,19 @@ export default function SellerDashboard() {
             className="w-full border p-4 rounded-xl"
           />
 
-          <input
-            type="text"
-            placeholder="Dish Image URL"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            required
-            className="w-full border p-4 rounded-xl"
-          />
+          <div className="w-full border p-4 rounded-xl bg-white">
+            <label className="block font-semibold mb-3">
+              Upload Dish Image
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files[0])}
+              required
+              className="w-full"
+            />
+          </div>
 
           <select
             value={mealCategory}
@@ -210,13 +244,16 @@ export default function SellerDashboard() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploadingImage}
             className="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold"
           >
-            {loading ? "Adding Dish..." : "Add Dish"}
+            {uploadingImage
+              ? "Uploading Image..."
+              : loading
+              ? "Adding Dish..."
+              : "Add Dish"}
           </button>
         </form>
-
       </div>
     </main>
   );
