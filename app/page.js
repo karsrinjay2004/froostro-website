@@ -162,11 +162,43 @@ export default function Home() {
         description: "Food Order Payment",
         order_id: order.id,
 
-        handler: function () {
-          alert("Payment successful!");
-          setCartItems([]);
-          setCheckoutOpen(false);
-        },
+       handler: function () {
+  const groupedItems = {};
+
+  cartItems.forEach((item) => {
+    if (groupedItems[item.dishName]) {
+      groupedItems[item.dishName].quantity += 1;
+    } else {
+      groupedItems[item.dishName] = {
+        quantity: 1,
+      };
+    }
+  });
+
+  let itemMessage = "";
+
+  Object.keys(groupedItems).forEach((dishName) => {
+    itemMessage += `${dishName} x ${groupedItems[dishName].quantity}%0A`;
+  });
+
+  const whatsappMessage =
+    `Welcome To Froostro!%0A%0A` +
+    `New Paid Order Received%0A%0A` +
+    `Items:%0A${itemMessage}%0A` +
+    `Food Total: ₹${foodTotal}%0A` +
+    `Delivery Charge: ₹${deliveryCharge}%0A` +
+    `Grand Total Paid: ₹${grandTotal}`;
+
+  window.open(
+    `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
+    "_blank"
+  );
+
+  alert("Payment successful!");
+
+  setCartItems([]);
+  setCheckoutOpen(false);
+},
 
         theme: {
           color: "#f97316",
