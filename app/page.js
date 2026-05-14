@@ -8,6 +8,12 @@ import Script from "next/script";
 export default function Home() {
   const [dishes, setDishes] = useState([]);
   const [cartItems, setCartItems] = useState([]);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [distance, setDistance] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [foodTotal, setFoodTotal] = useState(0);
+  const [grandTotal, setGrandTotal] = useState(0);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const whatsappNumber = "918822780887";
 
@@ -31,7 +37,45 @@ export default function Home() {
   };
 
   const addToCart = (dish) => {
+    if (cartItems.length > 0) {
+      const existingSeller = cartItems[0].sellerName;
+
+      if (dish.sellerName !== existingSeller) {
+        alert(
+          "You can order from only one seller at a time. Please clear your cart first."
+        );
+        return;
+      }
+    }
+
     setCartItems((prev) => [...prev, dish]);
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const toRad = (value) => (value * Math.PI) / 180;
+    const R = 6371;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+
+  const calculateDeliveryCharge = (km) => {
+    if (km <= 1) {
+      return 48;
+    }
+
+    return Math.ceil(48 + (km - 1) * 12);
   };
 
   const handleCheckout = async () => {
@@ -40,19 +84,71 @@ export default function Home() {
       return;
     }
 
-    try {
-      const totalAmount = cartItems.reduce(
-        (sum, item) => sum + Number(item.price),
-        0
-      );
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported in this browser.");
+      return;
+    }
 
+    setCheckoutLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const customerLat = position.coords.latitude;
+        const customerLng = position.coords.longitude;
+
+        const sellerLat = cartItems[0].latitude;
+        const sellerLng = cartItems[0].longitude;
+
+        if (
+          sellerLat === undefined ||
+          sellerLng === undefined ||
+          sellerLat === null ||
+          sellerLng === null
+        ) {
+          alert(
+            "Seller location unavailable. Please re-add dishes uploaded after seller location update."
+          );
+          setCheckoutLoading(false);
+          return;
+        }
+
+        const km = calculateDistance(
+          customerLat,
+          customerLng,
+          sellerLat,
+          sellerLng
+        );
+
+        const delivery = calculateDeliveryCharge(km);
+
+        const totalFood = cartItems.reduce(
+          (sum, item) => sum + Number(item.price),
+          0
+        );
+
+        setDistance(km.toFixed(2));
+        setDeliveryCharge(delivery);
+        setFoodTotal(totalFood);
+        setGrandTotal(totalFood + delivery);
+        setCheckoutOpen(true);
+        setCheckoutLoading(false);
+      },
+      () => {
+        alert("Please allow location access to continue.");
+        setCheckoutLoading(false);
+      }
+    );
+  };
+
+  const proceedToPayment = async () => {
+    try {
       const response = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: totalAmount,
+          amount: grandTotal,
         }),
       });
 
@@ -69,6 +165,7 @@ export default function Home() {
         handler: function () {
           alert("Payment successful!");
           setCartItems([]);
+          setCheckoutOpen(false);
         },
 
         theme: {
@@ -88,6 +185,56 @@ export default function Home() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
+      {checkoutOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-orange-600 text-center">
+              Checkout Summary
+            </h2>
+
+            <div className="mt-6 space-y-3 text-lg">
+              <p>
+                <strong>Food Total:</strong> ₹{foodTotal}
+              </p>
+              <p>
+                <strong>Distance:</strong> {distance} km
+              </p>
+              <p>
+                <strong>Delivery Charge:</strong> ₹{deliveryCharge}
+              </p>
+              <p>
+                <strong>Grand Total:</strong> ₹{grandTotal}
+              </p>
+            </div>
+
+            {deliveryCharge > 50 && (
+              <p className="mt-5 text-sm text-red-600 bg-red-50 p-4 rounded-xl">
+                Please Don't think you are paying extra, the delivery charges
+                will be going to our logistics partner Porter as we currently
+                don't have our own logistics, but we will make it as soon as
+                possible.
+              </p>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setCheckoutOpen(false)}
+                className="w-1/2 bg-gray-300 py-3 rounded-xl font-semibold"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={proceedToPayment}
+                className="w-1/2 bg-orange-500 text-white py-3 rounded-xl font-semibold"
+              >
+                Proceed to Pay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="min-h-screen bg-orange-50 text-black">
         {/* NAVBAR */}
         <nav className="sticky top-0 z-50 bg-white shadow-md px-6 py-4 flex justify-between items-center">
@@ -98,9 +245,7 @@ export default function Home() {
               className="w-12 h-12 rounded-full"
             />
 
-            <h1 className="text-3xl font-bold text-orange-600">
-              FROOSTRO
-            </h1>
+            <h1 className="text-3xl font-bold text-orange-600">FROOSTRO</h1>
           </div>
 
           <div className="flex gap-3">
@@ -110,9 +255,10 @@ export default function Home() {
 
             <button
               onClick={handleCheckout}
+              disabled={checkoutLoading}
               className="bg-black text-white px-5 py-3 rounded-xl font-semibold"
             >
-              Checkout
+              {checkoutLoading ? "Calculating..." : "Checkout"}
             </button>
           </div>
         </nav>
@@ -180,13 +326,9 @@ export default function Home() {
                     </div>
 
                     <div className="p-6">
-                      <h3 className="text-2xl font-bold">
-                        {dish.dishName}
-                      </h3>
+                      <h3 className="text-2xl font-bold">{dish.dishName}</h3>
 
-                      <p className="text-gray-600 mt-2">
-                        {dish.description}
-                      </p>
+                      <p className="text-gray-600 mt-2">{dish.description}</p>
 
                       <p className="text-2xl font-bold mt-4 text-orange-600">
                         ₹{dish.price}
@@ -211,26 +353,33 @@ export default function Home() {
             </h2>
 
             <p className="text-gray-700 mt-4 max-w-3xl mx-auto">
-              Choose flexible home-style meal subscriptions from verified Froostro sellers.
+              Choose flexible home-style meal subscriptions from verified
+              Froostro sellers.
             </p>
 
             <div className="grid md:grid-cols-3 gap-8 mt-14">
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
-                <h3 className="text-2xl font-bold text-orange-600">Daily Plan</h3>
+                <h3 className="text-2xl font-bold text-orange-600">
+                  Daily Plan
+                </h3>
                 <p className="mt-6 text-gray-600">
                   Perfect for fresh daily home meals.
                 </p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
-                <h3 className="text-2xl font-bold text-orange-600">Weekly Plan</h3>
+                <h3 className="text-2xl font-bold text-orange-600">
+                  Weekly Plan
+                </h3>
                 <p className="mt-6 text-gray-600">
                   Ideal for hassle-free weekly meal planning.
                 </p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
-                <h3 className="text-2xl font-bold text-orange-600">Monthly Plan</h3>
+                <h3 className="text-2xl font-bold text-orange-600">
+                  Monthly Plan
+                </h3>
                 <p className="mt-6 text-gray-600">
                   Best for affordable long-term subscriptions.
                 </p>
