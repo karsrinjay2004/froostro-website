@@ -51,6 +51,21 @@ export default function Home() {
     setCartItems((prev) => [...prev, dish]);
   };
 
+  const removeFromCart = (dish) => {
+    const index = cartItems.findIndex((item) => item.id === dish.id);
+
+    if (index === -1) return;
+
+    const updatedCart = [...cartItems];
+    updatedCart.splice(index, 1);
+
+    setCartItems(updatedCart);
+  };
+
+  const getDishQuantity = (dish) => {
+    return cartItems.filter((item) => item.id === dish.id).length;
+  };
+
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const toRad = (value) => (value * Math.PI) / 180;
     const R = 6371;
@@ -162,43 +177,43 @@ export default function Home() {
         description: "Food Order Payment",
         order_id: order.id,
 
-       handler: function () {
-  const groupedItems = {};
+        handler: function () {
+          const groupedItems = {};
 
-  cartItems.forEach((item) => {
-    if (groupedItems[item.dishName]) {
-      groupedItems[item.dishName].quantity += 1;
-    } else {
-      groupedItems[item.dishName] = {
-        quantity: 1,
-      };
-    }
-  });
+          cartItems.forEach((item) => {
+            if (groupedItems[item.dishName]) {
+              groupedItems[item.dishName].quantity += 1;
+            } else {
+              groupedItems[item.dishName] = {
+                quantity: 1,
+              };
+            }
+          });
 
-  let itemMessage = "";
+          let itemMessage = "";
 
-  Object.keys(groupedItems).forEach((dishName) => {
-    itemMessage += `${dishName} x ${groupedItems[dishName].quantity}%0A`;
-  });
+          Object.keys(groupedItems).forEach((dishName) => {
+            itemMessage += `${dishName} x ${groupedItems[dishName].quantity}%0A`;
+          });
 
-  const whatsappMessage =
-    `Welcome To Froostro!%0A%0A` +
-    `New Paid Order Received%0A%0A` +
-    `Items:%0A${itemMessage}%0A` +
-    `Food Total: ₹${foodTotal}%0A` +
-    `Delivery Charge: ₹${deliveryCharge}%0A` +
-    `Grand Total Paid: ₹${grandTotal}`;
+          const whatsappMessage =
+            `Welcome To Froostro!%0A%0A` +
+            `New Paid Order Received%0A%0A` +
+            `Items:%0A${itemMessage}%0A` +
+            `Food Total: ₹${foodTotal}%0A` +
+            `Delivery Charge: ₹${deliveryCharge}%0A` +
+            `Grand Total Paid: ₹${grandTotal}`;
 
-  window.open(
-    `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
-    "_blank"
-  );
+          window.open(
+            `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`,
+            "_blank"
+          );
 
-  alert("Payment successful!");
+          alert("Payment successful!");
 
-  setCartItems([]);
-  setCheckoutOpen(false);
-},
+          setCartItems([]);
+          setCheckoutOpen(false);
+        },
 
         theme: {
           color: "#f97316",
@@ -225,18 +240,10 @@ export default function Home() {
             </h2>
 
             <div className="mt-6 space-y-3 text-lg">
-              <p>
-                <strong>Food Total:</strong> ₹{foodTotal}
-              </p>
-              <p>
-                <strong>Distance:</strong> {distance} km
-              </p>
-              <p>
-                <strong>Delivery Charge:</strong> ₹{deliveryCharge}
-              </p>
-              <p>
-                <strong>Grand Total:</strong> ₹{grandTotal}
-              </p>
+              <p><strong>Food Total:</strong> ₹{foodTotal}</p>
+              <p><strong>Distance:</strong> {distance} km</p>
+              <p><strong>Delivery Charge:</strong> ₹{deliveryCharge}</p>
+              <p><strong>Grand Total:</strong> ₹{grandTotal}</p>
             </div>
 
             {deliveryCharge > 50 && (
@@ -268,15 +275,9 @@ export default function Home() {
       )}
 
       <main className="min-h-screen bg-orange-50 text-black">
-        {/* NAVBAR */}
         <nav className="sticky top-0 z-50 bg-white shadow-md px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.jpg"
-              alt="Froostro"
-              className="w-12 h-12 rounded-full"
-            />
-
+            <img src="/logo.jpg" alt="Froostro" className="w-12 h-12 rounded-full" />
             <h1 className="text-3xl font-bold text-orange-600">FROOSTRO</h1>
           </div>
 
@@ -295,7 +296,6 @@ export default function Home() {
           </div>
         </nav>
 
-        {/* HERO */}
         <section className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-20">
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-5xl font-bold">
@@ -324,7 +324,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* DISHES */}
         <section className="py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-4xl font-bold text-center text-orange-600">
@@ -349,19 +348,30 @@ export default function Home() {
                         className="w-full h-64 object-cover"
                       />
 
-                      <button
-                        onClick={() => addToCart(dish)}
-                        className="absolute bottom-4 left-4 bg-orange-500 text-white w-14 h-14 rounded-full text-3xl font-bold flex items-center justify-center shadow-lg"
-                      >
-                        +
-                      </button>
+                      <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white rounded-full shadow-lg px-3 py-2">
+                        <button
+                          onClick={() => removeFromCart(dish)}
+                          className="bg-red-500 text-white w-10 h-10 rounded-full text-2xl font-bold flex items-center justify-center"
+                        >
+                          -
+                        </button>
+
+                        <span className="text-lg font-bold text-black min-w-[20px] text-center">
+                          {getDishQuantity(dish)}
+                        </span>
+
+                        <button
+                          onClick={() => addToCart(dish)}
+                          className="bg-orange-500 text-white w-10 h-10 rounded-full text-2xl font-bold flex items-center justify-center"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
 
                     <div className="p-6">
                       <h3 className="text-2xl font-bold">{dish.dishName}</h3>
-
                       <p className="text-gray-600 mt-2">{dish.description}</p>
-
                       <p className="text-2xl font-bold mt-4 text-orange-600">
                         ₹{dish.price}
                       </p>
@@ -377,7 +387,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SUBSCRIPTION */}
         <section className="py-20 px-6 bg-orange-100">
           <div className="max-w-6xl mx-auto text-center">
             <h2 className="text-4xl font-bold text-orange-600">
@@ -391,27 +400,21 @@ export default function Home() {
 
             <div className="grid md:grid-cols-3 gap-8 mt-14">
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
-                <h3 className="text-2xl font-bold text-orange-600">
-                  Daily Plan
-                </h3>
+                <h3 className="text-2xl font-bold text-orange-600">Daily Plan</h3>
                 <p className="mt-6 text-gray-600">
                   Perfect for fresh daily home meals.
                 </p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
-                <h3 className="text-2xl font-bold text-orange-600">
-                  Weekly Plan
-                </h3>
+                <h3 className="text-2xl font-bold text-orange-600">Weekly Plan</h3>
                 <p className="mt-6 text-gray-600">
                   Ideal for hassle-free weekly meal planning.
                 </p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
-                <h3 className="text-2xl font-bold text-orange-600">
-                  Monthly Plan
-                </h3>
+                <h3 className="text-2xl font-bold text-orange-600">Monthly Plan</h3>
                 <p className="mt-6 text-gray-600">
                   Best for affordable long-term subscriptions.
                 </p>
@@ -420,7 +423,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FOOTER */}
         <footer className="bg-black text-white py-8 text-center">
           <p>© 2026 Froostro. All Rights Reserved.</p>
         </footer>
