@@ -17,6 +17,9 @@ import { useRouter } from "next/navigation";
 export default function SellerDashboard() {
   const [sellerName, setSellerName] = useState("");
   const [sellerType, setSellerType] = useState("");
+  const [sellerLatitude, setSellerLatitude] = useState(null);
+  const [sellerLongitude, setSellerLongitude] = useState(null);
+
   const [dishName, setDishName] = useState("");
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -50,8 +53,11 @@ export default function SellerDashboard() {
 
         if (sellerSnap.exists()) {
           const data = sellerSnap.data();
+
           setSellerName(data.sellerName);
           setSellerType(data.sellerType);
+          setSellerLatitude(data.latitude);
+          setSellerLongitude(data.longitude);
         } else {
           router.push("/seller/auth");
         }
@@ -79,6 +85,8 @@ export default function SellerDashboard() {
         mealCategory,
         subscriptionType,
         quantity,
+        latitude: sellerLatitude,
+        longitude: sellerLongitude,
         createdAt: new Date(),
       });
 
