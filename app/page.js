@@ -134,6 +134,15 @@ export default function Home() {
           sellerLng
         );
 
+        // NEW BUSINESS RULE
+        if (km > 10) {
+          alert(
+            "Sorry! we couldn't deliver your order as we deliver orders Upto 10kms!!!"
+          );
+          setCheckoutLoading(false);
+          return;
+        }
+
         const delivery = calculateDeliveryCharge(km);
 
         const totalFood = cartItems.reduce(
@@ -401,23 +410,17 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-8 mt-14">
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
                 <h3 className="text-2xl font-bold text-orange-600">Daily Plan</h3>
-                <p className="mt-6 text-gray-600">
-                  Perfect for fresh daily home meals.
-                </p>
+                <p className="mt-6 text-gray-600">Perfect for fresh daily home meals.</p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
                 <h3 className="text-2xl font-bold text-orange-600">Weekly Plan</h3>
-                <p className="mt-6 text-gray-600">
-                  Ideal for hassle-free weekly meal planning.
-                </p>
+                <p className="mt-6 text-gray-600">Ideal for hassle-free weekly meal planning.</p>
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8 border">
                 <h3 className="text-2xl font-bold text-orange-600">Monthly Plan</h3>
-                <p className="mt-6 text-gray-600">
-                  Best for affordable long-term subscriptions.
-                </p>
+                <p className="mt-6 text-gray-600">Best for affordable long-term subscriptions.</p>
               </div>
             </div>
           </div>
@@ -431,4 +434,3 @@ export default function Home() {
   );
 }
     
-                      
