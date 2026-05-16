@@ -202,7 +202,7 @@ export default function SellerDashboard() {
             value={dishName}
             onChange={(e) => setDishName(e.target.value)}
             required
-            className="w-full border p-4 rounded-xl"
+            className="w-full border p-4 rounded-xl bg-white text-black placeholder-gray-500"
           />
 
           <input
@@ -211,7 +211,7 @@ export default function SellerDashboard() {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
-            className="w-full border p-4 rounded-xl"
+            className="w-full border p-4 rounded-xl bg-white text-black placeholder-gray-500"
           />
 
           <input
@@ -220,10 +220,10 @@ export default function SellerDashboard() {
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             required
-            className="w-full border p-4 rounded-xl"
+            className="w-full border p-4 rounded-xl bg-white text-black placeholder-gray-500"
           />
 
-          <div className="w-full border p-4 rounded-xl bg-white">
+          <div className="w-full border p-4 rounded-xl bg-white text-black">
             <label className="block font-semibold mb-3">
               Upload Dish Image
             </label>
@@ -233,7 +233,7 @@ export default function SellerDashboard() {
               accept="image/*"
               onChange={(e) => setImageFile(e.target.files[0])}
               required
-              className="w-full"
+              className="w-full text-black"
             />
           </div>
 
@@ -250,7 +250,7 @@ export default function SellerDashboard() {
             value={mealCategory}
             onChange={(e) => setMealCategory(e.target.value)}
             required
-            className="w-full border p-4 rounded-xl"
+            className="w-full border p-4 rounded-xl bg-white text-black"
           >
             <option value="">Select Meal Category</option>
             <option value="Breakfast">Breakfast</option>
@@ -264,7 +264,7 @@ export default function SellerDashboard() {
             value={subscriptionType}
             onChange={(e) => setSubscriptionType(e.target.value)}
             required
-            className="w-full border p-4 rounded-xl"
+            className="w-full border p-4 rounded-xl bg-white text-black"
           >
             <option value="">Subscription Compatibility</option>
             <option value="Daily">Daily</option>
@@ -278,7 +278,7 @@ export default function SellerDashboard() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows="4"
-            className="w-full border p-4 rounded-xl"
+            className="w-full border p-4 rounded-xl bg-white text-black placeholder-gray-500"
           />
 
           <button
