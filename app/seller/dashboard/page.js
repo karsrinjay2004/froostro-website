@@ -113,6 +113,8 @@ export default function SellerDashboard() {
         mealCategory,
         subscriptionType,
         quantity,
+        latitude: sellerLatitude,
+        longitude: sellerLongitude,
         createdAt: new Date(),
       });
 
