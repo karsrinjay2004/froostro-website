@@ -289,7 +289,7 @@ export default function Home() {
             <img
   src="/logo.jpg"
   alt="Froostro"
-  className="w-22 h-22 md:w-30 md:h-30 rounded-full object-cover"
+  className="w-14 h-14 md:w-30 md:h-30 rounded-full object-cover"
 />
             <h1 className="text-3xl font-bold text-orange-600">FROOSTRO</h1>
           </div>
