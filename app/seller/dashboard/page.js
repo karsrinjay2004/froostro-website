@@ -29,6 +29,10 @@ export default function SellerDashboard() {
 
   const [imageFile, setImageFile] = useState(null);
 
+  // FIXED LOCATION STATES
+  const [sellerLatitude, setSellerLatitude] = useState(null);
+  const [sellerLongitude, setSellerLongitude] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -55,6 +59,25 @@ export default function SellerDashboard() {
 
     return () => unsubscribe();
   }, [router]);
+
+  // FIXED LOCATION FUNCTION
+  const fetchSellerLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setSellerLatitude(position.coords.latitude);
+        setSellerLongitude(position.coords.longitude);
+        alert("Kitchen location captured successfully!");
+      },
+      () => {
+        alert("Please allow location access.");
+      }
+    );
+  };
 
   const handleLogout = async () => {
     try {
@@ -99,6 +122,11 @@ export default function SellerDashboard() {
     e.preventDefault();
 
     try {
+      if (!sellerLatitude || !sellerLongitude) {
+        alert("Please capture your kitchen location first.");
+        return;
+      }
+
       setLoading(true);
 
       const imageUrl = await uploadToCloudinary();
@@ -139,7 +167,7 @@ export default function SellerDashboard() {
   return (
     <main className="min-h-screen bg-orange-50 px-6 py-12">
       <div className="max-w-2xl mx-auto bg-white shadow-2xl rounded-2xl p-10">
-        
+
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-orange-600">
             Seller Dashboard
@@ -167,7 +195,7 @@ export default function SellerDashboard() {
         </div>
 
         <form onSubmit={handleAddDish} className="mt-8 space-y-5">
-          
+
           <input
             type="text"
             placeholder="Dish Name"
@@ -208,6 +236,15 @@ export default function SellerDashboard() {
               className="w-full"
             />
           </div>
+
+          {/* NEW LOCATION BUTTON */}
+          <button
+            type="button"
+            onClick={fetchSellerLocation}
+            className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold"
+          >
+            Use Current Kitchen Location
+          </button>
 
           <select
             value={mealCategory}
