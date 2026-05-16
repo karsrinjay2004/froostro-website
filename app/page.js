@@ -286,7 +286,11 @@ export default function Home() {
       <main className="min-h-screen bg-orange-50 text-black">
         <nav className="sticky top-0 z-50 bg-white shadow-md px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <img src="/logo.jpg" alt="Froostro" className="w-12 h-12 rounded-full" />
+            <img
+  src="/logo.jpg"
+  alt="Froostro"
+  className="w-22 h-22 md:w-30 md:h-30 rounded-full object-cover"
+/>
             <h1 className="text-3xl font-bold text-orange-600">FROOSTRO</h1>
           </div>
 
