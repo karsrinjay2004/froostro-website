@@ -87,10 +87,10 @@ export default function Home() {
 
   const calculateDeliveryCharge = (km) => {
     if (km <= 1) {
-      return 48;
+      return 50;
     }
 
-    return Math.ceil(48 + (km - 1) * 12);
+    return Math.ceil(50 + (km - 1) * 14);
   };
 
   const handleCheckout = async () => {
