@@ -19,6 +19,8 @@ export default function SellerDashboard() {
 
   const [sellerName, setSellerName] = useState("");
   const [sellerType, setSellerType] = useState("");
+  const [sellerId, setSellerId] = useState("");
+  const [businessName, setBusinessName] = useState("");
 
   const [dishName, setDishName] = useState("");
   const [price, setPrice] = useState("");
@@ -49,8 +51,10 @@ export default function SellerDashboard() {
 
         if (sellerSnap.exists()) {
           const data = sellerSnap.data();
+          setSellerId(user.uid);
           setSellerName(data.sellerName);
           setSellerType(data.sellerType);
+          setBusinessName(data.businessName || data.sellerName || "");
         }
       } catch (error) {
         console.error(error);
@@ -132,8 +136,10 @@ export default function SellerDashboard() {
       const imageUrl = await uploadToCloudinary();
 
       await addDoc(collection(db, "dishes"), {
+        sellerId,
         sellerName,
         sellerType,
+        businessName,
         dishName,
         price,
         imageUrl,
@@ -188,6 +194,9 @@ export default function SellerDashboard() {
         <div className="mt-6 bg-orange-100 p-4 rounded-xl">
           <p>
             <strong>Seller:</strong> {sellerName || "Loading..."}
+          </p>
+          <p>
+            <strong>Business:</strong> {businessName || "Loading..."}
           </p>
           <p>
             <strong>Type:</strong> {sellerType || "Loading..."}
