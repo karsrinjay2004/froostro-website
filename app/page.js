@@ -405,7 +405,25 @@ export default function Home() {
         </div>
 
         <div className="p-6 flex flex-col gap-3 flex-1">
-          <h3 className="text-2xl font-bold">{dish.dishName}</h3>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-2xl font-bold">{dish.dishName}</h3>
+            {dish.mealCategory && (
+              <span className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold ${
+                dish.mealCategory === "Breakfast" ? "bg-yellow-100 text-yellow-700" :
+                dish.mealCategory === "Lunch"     ? "bg-green-100 text-green-700"  :
+                dish.mealCategory === "Dinner"    ? "bg-indigo-100 text-indigo-700":
+                dish.mealCategory === "Snacks"    ? "bg-pink-100 text-pink-700"    :
+                dish.mealCategory === "Beverages" ? "bg-cyan-100 text-cyan-700"    :
+                "bg-gray-100 text-gray-600"
+              }`}>
+                {dish.mealCategory === "Breakfast" ? "🌅" :
+                 dish.mealCategory === "Lunch"     ? "🍱" :
+                 dish.mealCategory === "Dinner"    ? "🌙" :
+                 dish.mealCategory === "Snacks"    ? "🍿" :
+                 dish.mealCategory === "Beverages" ? "🥤" : "🍽️"} {dish.mealCategory}
+              </span>
+            )}
+          </div>
           <p className="text-gray-600">{dish.description}</p>
 
           {/* Combo items list for Weekly / Monthly */}
