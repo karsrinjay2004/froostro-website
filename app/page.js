@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { db } from "../lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import Script from "next/script";
 
 export default function Home() {
@@ -26,23 +26,29 @@ export default function Home() {
   const currencySymbol = "\u20B9";
 
   // ─── Load Firestore ──────────────────────────────────────────────────────────
+  // Real-time listeners: fires on page load AND whenever a seller adds/updates
+  // a dish from their dashboard — homepage always stays in sync automatically.
   useEffect(() => {
-    let ignore = false;
-    async function loadHomeData() {
-      try {
-        const [dishSnapshot, sellerSnapshot] = await Promise.all([
-          getDocs(collection(db, "dishes")),
-          getDocs(collection(db, "sellers")),
-        ]);
-        if (ignore) return;
-        setDishes(dishSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-        setSellers(sellerSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    loadHomeData();
-    return () => { ignore = true; };
+    const unsubDishes = onSnapshot(
+      collection(db, "dishes"),
+      (snapshot) => {
+        setDishes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => console.error("dishes listener error:", error)
+    );
+
+    const unsubSellers = onSnapshot(
+      collection(db, "sellers"),
+      (snapshot) => {
+        setSellers(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => console.error("sellers listener error:", error)
+    );
+
+    return () => {
+      unsubDishes();
+      unsubSellers();
+    };
   }, []);
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -112,7 +118,7 @@ export default function Home() {
   // ─── Dish ↔ Seller matching ───────────────────────────────────────────────────
   const dishMatchesSeller = (dish, seller) => {
     const sameType =
-      normalizeText(dish.sellerType) === normalizeText(seller.sellerType);
+      normalizeText(dish.sellerType || "Home Cook") === normalizeText(seller.sellerType || "Home Cook");
     const sameSellerId =
       seller.id && dish.sellerId &&
       normalizeText(dish.sellerId) === normalizeText(seller.id);
@@ -140,8 +146,8 @@ export default function Home() {
     dishes.filter(
       (dish) =>
         dishMatchesSeller(dish, seller) &&
-        (normalizeText(dish.subscriptionType) === normalizeText(subscriptionType) ||
-          normalizeText(dish.subscriptionType) === "all")
+        (normalizeText(dish.subscriptionType || "daily") === normalizeText(subscriptionType) ||
+          normalizeText(dish.subscriptionType || "daily") === "all")
     ).length;
 
   const selectedSellerDishes = selectedSeller
@@ -151,7 +157,7 @@ export default function Home() {
   const visibleDishes =
     activeSellerType === "Home Cook"
       ? selectedSellerDishes.filter((dish) => {
-          const sub = normalizeText(dish.subscriptionType);
+          const sub = normalizeText(dish.subscriptionType || "daily");
           return sub === normalizeText(activeSubscriptionType) || sub === "all";
         })
       : selectedSellerDishes;
