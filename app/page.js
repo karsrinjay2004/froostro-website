@@ -596,30 +596,46 @@ export default function Home() {
       <main className="min-h-screen bg-orange-50 text-black">
 
         {/* ── Navbar ── */}
-        <nav className="sticky top-0 z-50 bg-white shadow-md px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
+        <nav className="sticky top-0 z-50 bg-white shadow-md px-3 py-3 flex justify-between items-center">
+
+          {/* Logo + Name */}
+          <div className="flex items-center gap-2 min-w-0">
             <img
               src="/logo.jpg"
               alt="Froostro"
-              className="w-14 h-14 md:w-30 md:h-30 rounded-full object-cover"
+              className="w-10 h-10 md:w-14 md:h-14 rounded-full object-cover flex-shrink-0"
             />
-            <h1 className="text-3xl font-bold text-orange-600">FROOSTRO</h1>
+            <h1 className="text-lg md:text-3xl font-bold text-orange-600 truncate">
+              FROOSTRO
+            </h1>
           </div>
-          <div className="flex gap-3">
-            <div className="bg-orange-500 text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2">
-              Cart ({cartItems.length})
+
+          {/* Cart + Checkout */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Cart — icon only on mobile, full text on desktop */}
+            <div className="bg-orange-500 text-white rounded-xl font-semibold flex items-center gap-1 px-3 py-2 md:px-5 md:py-3">
+              <span className="text-base">🛒</span>
+              <span className="text-sm md:text-base font-bold">{cartItems.length}</span>
               {cartItems.length > 0 && (
-                <span className="text-xs bg-white text-orange-600 px-2 py-0.5 rounded-full font-bold">
+                <span className="hidden md:inline text-xs bg-white text-orange-600 px-2 py-0.5 rounded-full font-bold ml-1">
                   {cartSubscriptionType}
                 </span>
               )}
             </div>
+
+            {/* Checkout — short label on mobile */}
             <button
               onClick={handleCheckout}
               disabled={checkoutLoading}
-              className="bg-black text-white px-5 py-3 rounded-xl font-semibold"
+              className="bg-black text-white rounded-xl font-semibold text-sm md:text-base px-3 py-2 md:px-5 md:py-3"
             >
-              {checkoutLoading ? "Calculating..." : "Checkout"}
+              {checkoutLoading
+                ? <span className="hidden md:inline">Calculating...</span>
+                : <>
+                    <span className="md:hidden">Pay</span>
+                    <span className="hidden md:inline">Checkout</span>
+                  </>
+              }
             </button>
           </div>
         </nav>
