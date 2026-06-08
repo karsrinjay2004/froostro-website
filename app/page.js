@@ -378,11 +378,13 @@ export default function Home() {
           const days    = getDaysMultiplier(subType);
 
           // Get home cook name from cart items
-          const homeCookName =
+          // .replace encodes spaces as %20 so the WhatsApp URL doesn't break
+          const homeCookName = (
             cartItems[0]?.businessName ||
             cartItems[0]?.kitchenName  ||
             cartItems[0]?.sellerName   ||
-            "Unknown Cook";
+            "Unknown Cook"
+          ).replace(/ /g, "%20");
 
           const whatsappMessage =
             `🔔 NEW ORDER ALERT — FROOSTRO%0A` +
