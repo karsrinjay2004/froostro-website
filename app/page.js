@@ -183,27 +183,33 @@ export default function Home() {
   );
 
   // ─── Dish ↔ Seller matching ───────────────────────────────────────────────────
+  // PRIMARY match: sellerId (never changes, always reliable)
+  // FALLBACK matches: businessName, kitchenName, sellerName (for older dishes)
   const dishMatchesSeller = (dish, seller) => {
-    const sameType =
-      normalizeText(dish.sellerType || "Home Cook") === normalizeText(seller.sellerType || "Home Cook");
-    const sameSellerId =
-      seller.id && dish.sellerId &&
+
+    // ── PRIMARY: match by sellerId ──────────────────────────────────────────
+    // dish.sellerId === seller document ID (most reliable)
+    const matchBySellerId =
+      dish.sellerId && seller.id &&
       normalizeText(dish.sellerId) === normalizeText(seller.id);
-    const sameFallbackSellerId =
-      seller.sellerId && dish.sellerId &&
-      normalizeText(dish.sellerId) === normalizeText(seller.sellerId);
-    const sameBusinessName =
-      getSellerDisplayName(seller) &&
-      (dish.businessName || dish.kitchenName) &&
-      normalizeText(dish.businessName || dish.kitchenName) ===
-        normalizeText(getSellerDisplayName(seller));
-    const sameSellerName =
-      seller.sellerName && dish.sellerName &&
+
+    if (matchBySellerId) return true;
+
+    // ── FALLBACK: match by sellerName (for dishes uploaded before businessName change) ──
+    const matchBySellerName =
+      dish.sellerName && seller.sellerName &&
       normalizeText(dish.sellerName) === normalizeText(seller.sellerName);
-    return (
-      sameType &&
-      (sameSellerId || sameFallbackSellerId || sameBusinessName || sameSellerName)
-    );
+
+    if (matchBySellerName) return true;
+
+    // ── FALLBACK: match by businessName ────────────────────────────────────
+    const matchByBusinessName =
+      dish.businessName && seller.businessName &&
+      normalizeText(dish.businessName) === normalizeText(seller.businessName);
+
+    if (matchByBusinessName) return true;
+
+    return false;
   };
 
   const sellerDishCount = (seller) =>
