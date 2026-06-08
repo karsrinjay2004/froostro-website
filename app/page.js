@@ -23,6 +23,64 @@ export default function Home() {
   const [cartSubscriptionType, setCartSubscriptionType] = useState("Daily");
 
   const whatsappNumber = "918822780887";
+
+  // ─── Time slots (must match SellerAvailability.js) ─────────────────────────
+  const TIME_SLOTS = [
+    { id: "slot_1", label: "Breakfast",  time: "7:00 AM – 9:00 AM"  },
+    { id: "slot_2", label: "Morning",    time: "10:00 AM – 12:00 PM" },
+    { id: "slot_3", label: "Lunch",      time: "12:00 PM – 2:00 PM"  },
+    { id: "slot_4", label: "Evening",    time: "4:00 PM – 6:00 PM"   },
+    { id: "slot_5", label: "Dinner",     time: "7:00 PM – 9:00 PM"   },
+  ];
+
+  // ─── Helper: get seller availability status ─────────────────────────────────
+  const todayStr = () => new Date().toISOString().split("T")[0];
+
+  const getSellerAvailability = (seller) => {
+    const avail = seller.availability;
+    if (!avail || avail.date !== todayStr()) {
+      return { status: "open", nextSlot: null }; // new day = fully open
+    }
+
+    if (avail.fullDayUnavailable) {
+      return { status: "closed", nextSlot: null };
+    }
+
+    // Find next available slot from current time
+    const now = new Date();
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+
+    const slotStartHours = {
+      slot_1: 7,  slot_2: 10, slot_3: 12,
+      slot_4: 16, slot_5: 19,
+    };
+
+    const nextAvailable = TIME_SLOTS.find((s) => {
+      const slotAvail = avail.slots?.[s.id];
+      const isAvail   = !slotAvail || slotAvail === "available";
+      return isAvail && slotStartHours[s.id] > currentHour;
+    });
+
+    // Check if currently in an available slot
+    const currentSlot = TIME_SLOTS.find((s) => {
+      const slotAvail  = avail.slots?.[s.id];
+      const isAvail    = !slotAvail || slotAvail === "available";
+      const slotEnd    = { slot_1: 9, slot_2: 12, slot_3: 14, slot_4: 18, slot_5: 21 };
+      return (
+        isAvail &&
+        slotStartHours[s.id] <= currentHour &&
+        currentHour < slotEnd[s]
+      );
+    });
+
+    if (currentSlot) return { status: "open", nextSlot: null };
+
+    if (nextAvailable) {
+      return { status: "busy", nextSlot: nextAvailable };
+    }
+
+    return { status: "closed", nextSlot: null };
+  };
   const currencySymbol = "\u20B9";
 
   // ─── Load Firestore ──────────────────────────────────────────────────────────
@@ -319,16 +377,28 @@ export default function Home() {
           const subType = cartSubscriptionType || "Daily";
           const days    = getDaysMultiplier(subType);
 
+          // Get home cook name from cart items
+          const homeCookName =
+            cartItems[0]?.businessName ||
+            cartItems[0]?.kitchenName  ||
+            cartItems[0]?.sellerName   ||
+            "Unknown Cook";
+
           const whatsappMessage =
-            `Welcome To Froostro!%0A%0A` +
-            `New Paid Order Received (${subType} Plan)%0A%0A` +
-            `Items:%0A${itemMessage}%0A` +
-            `Combo/Food Total: ${currencySymbol}${foodTotal}%0A` +
-            `Distance: ${distance} km%0A` +
-            `Delivery per day: ${currencySymbol}${perDeliveryCharge}%0A` +
-            `Days: ${days}%0A` +
-            `Total Delivery Charge: ${currencySymbol}${deliveryCharge}%0A` +
-            `Grand Total Paid: ${currencySymbol}${grandTotal}`;
+            `🔔 NEW ORDER ALERT — FROOSTRO%0A` +
+            `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
+            `🏠 Home Cook: ${homeCookName}%0A%0A` +
+            `📋 Plan: ${subType}%0A%0A` +
+            `🍱 Items Ordered:%0A${itemMessage}%0A` +
+            `━━━━━━━━━━━━━━━━━━━━%0A` +
+            `🧾 Food Total:       ${currencySymbol}${foodTotal}%0A` +
+            `📍 Distance:         ${distance} km%0A` +
+            `🚚 Delivery/day:     ${currencySymbol}${perDeliveryCharge}%0A` +
+            `📅 Days:             ${days}%0A` +
+            `🚚 Total Delivery:   ${currencySymbol}${deliveryCharge}%0A` +
+            `━━━━━━━━━━━━━━━━━━━━%0A` +
+            `✅ Grand Total PAID: ${currencySymbol}${grandTotal}%0A%0A` +
+            `⏰ Time: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`;
 
           window.open(`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`, "_blank");
           alert("Payment successful!");
@@ -714,12 +784,44 @@ export default function Home() {
                         setSelectedSeller(seller);
                         setActiveSubscriptionType("Daily");
                       }}
-                      className={`text-left bg-white rounded-2xl shadow-xl p-6 border-2 transition ${
+                      className={`relative text-left bg-white rounded-2xl shadow-xl p-6 border-2 transition overflow-hidden ${
                         isActive
                           ? "border-orange-500 ring-2 ring-orange-300"
                           : "border-transparent hover:border-orange-200"
                       }`}
                     >
+                      {/* ── Zomato-style availability overlay ── */}
+                      {(() => {
+                        const { status, nextSlot } = getSellerAvailability(seller);
+
+                        if (status === "closed") {
+                          return (
+                            <>
+                              {/* Dim overlay */}
+                              <div className="absolute inset-0 bg-white/70 rounded-2xl z-10 pointer-events-none" />
+                              {/* Badge */}
+                              <div className="absolute top-4 right-4 z-20 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                                ❌ Not Available Today
+                              </div>
+                            </>
+                          );
+                        }
+
+                        if (status === "busy") {
+                          return (
+                            <div className="absolute top-4 right-4 z-20 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              🕐 Opens at {nextSlot?.time?.split("–")[0].trim()}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="absolute top-4 right-4 z-20 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                            🟢 Open Now
+                          </div>
+                        );
+                      })()}
+
                       <p className="text-sm font-semibold text-orange-600">
                         {seller.sellerType}
                       </p>
@@ -753,6 +855,30 @@ export default function Home() {
                           {sellerDishCount(seller)} dishes available
                         </p>
                       )}
+
+                      {/* Next available time strip (closed sellers) */}
+                      {(() => {
+                        const { status, nextSlot } = getSellerAvailability(seller);
+                        if (status === "closed" && nextSlot) {
+                          return (
+                            <div className="mt-4 bg-red-50 border border-red-100 rounded-xl px-3 py-2 z-20 relative">
+                              <p className="text-xs text-red-700 font-semibold">
+                                🕐 Next available: {nextSlot.label} · {nextSlot.time}
+                              </p>
+                            </div>
+                          );
+                        }
+                        if (status === "closed" && !nextSlot) {
+                          return (
+                            <div className="mt-4 bg-red-50 border border-red-100 rounded-xl px-3 py-2 z-20 relative">
+                              <p className="text-xs text-red-700 font-semibold">
+                                ❌ Not accepting orders today
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </button>
                   );
                 })
