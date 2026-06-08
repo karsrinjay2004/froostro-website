@@ -136,13 +136,22 @@ export default function Home() {
     const sellerMap = new Map();
 
     sellers.forEach((seller) => {
-      const type = seller.sellerType || "Home Cook";
+      // If sellerType is blank/empty string — default to "Home Cook"
+      const type =
+        seller.sellerType && seller.sellerType.trim() !== ""
+          ? seller.sellerType.trim()
+          : "Home Cook";
       const key = seller.id || `${type}-${seller.sellerName}`;
       sellerMap.set(key, {
         ...seller,
         id: key,
         sellerType: type,
-        displayName: getSellerDisplayName(seller),
+        // Also fix blank businessName — fall back to sellerName
+        businessName:
+          seller.businessName && seller.businessName.trim() !== ""
+            ? seller.businessName.trim()
+            : seller.sellerName || "Froostro Seller",
+        displayName: getSellerDisplayName(seller) || seller.sellerName || "Froostro Seller",
         source: "seller-profile",
       });
     });
