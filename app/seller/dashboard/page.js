@@ -145,16 +145,37 @@ export default function SellerDashboard() {
 
   // ─── Location ────────────────────────────────────────────────────────────────
   const fetchSellerLocation = () => {
-    if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setSellerLatitude(position.coords.latitude);
-        setSellerLongitude(position.coords.longitude);
-        alert("Kitchen location captured successfully!");
-      },
-      () => alert("Please allow location access.")
-    );
-  };
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported on this device.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setSellerLatitude(position.coords.latitude);
+      setSellerLongitude(position.coords.longitude);
+      alert("Kitchen location captured successfully!");
+    },
+    (error) => {
+      console.error(error);
+
+      if (error.code === 1) {
+        alert("Location permission denied. Please allow location access in Chrome.");
+      } else if (error.code === 2) {
+        alert("Location unavailable. Please turn on GPS and Google Location Accuracy.");
+      } else if (error.code === 3) {
+        alert("Location request timed out. Move outdoors and try again.");
+      } else {
+        alert("Unable to fetch location.");
+      }
+    },
+    {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 60000,
+    }
+  );
+};
 
   // ─── Logout ──────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
